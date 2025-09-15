@@ -1,6 +1,7 @@
 # Second-order-Homogenization-ML
 Accounting for Size Effects in Tailoring Lattice Structures: A Machine Learning-Assisted Second-Order Homogenization Approach (code and data)
 
+Preprint of this paper is in [SSRN](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5477425)
 # Contents
 
 ### DetailedDataGeneration
