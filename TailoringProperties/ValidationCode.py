@@ -19,10 +19,12 @@ LatticeTraction = 0.001
 d_Prescribed = 20.
 
 #allowed error
-epsilond = d_Prescribed / 100 #allowed error for resulting displacement
+epsilond = d_Prescribed / 1000 #allowed error for resulting displacement
+epsilonIGA = 1. #allowed error for iga analysis (percentage)
+epsilonIGA0 = 1. #allowed error for first iga analysis (percentage) new
 
-#Choosing continuum for analysis
-StrainGradientElasticity = 0 # 1 for strain gradient elasticity analysis and 0 for classical (Cauchy) elasticity analysis
+#Choosing continuum for analysisS
+StrainGradientElasticity = 1 # 1 for strain gradient elasticity analysis and 0 for classical (Cauchy) elasticity analysis
 
 #------------------------------------------------------------------------------------------
 ### Import needed packages ###
@@ -77,7 +79,7 @@ def FindParameters(StrutRadius, CubeLength, PoissonRatio, YoungModulus):
     return C, D
 
 #Isogeometric analysis to find resulting displacement
-def FindDisplacement(C, D, LatticeLenghth, LatticeWidth, LatticeHeight, LatticeTraction, epsilond, SGE): 
+def FindDisplacement(C, D, LatticeLenghth, LatticeWidth, LatticeHeight, LatticeTraction, epsilonIGA, SGE): 
     time0 = time.time()
     # Number of levels of refinement with which to run the Poisson problem.
     N_LEVELS = 1 # Number of levels of refinement 
@@ -92,9 +94,9 @@ def FindDisplacement(C, D, LatticeLenghth, LatticeWidth, LatticeHeight, LatticeT
     print('for SGE = ', SGE, ' and for strut radious = ', StrutRadius, file=open("3DSG_foam_energy.txt","a"))
     print('for SGE = ', SGE, ' and for strut radious = ', StrutRadius, file=open("3DSG_foam_disp.txt","a"))
     
-    error = 2 #preerror for mesh convergence process
+    error = 5 #preerror for mesh convergence process
     meshorder = 0 #level of mesh refinement
-    while error > epsilond: #Loop for mesh convergence for IGA
+    while error > epsilonIGA: #Loop for mesh convergence for IGA
         meshorder += 1
         print('\n Level of mesh refinement for strut radious of %f is %i : \n' %(StrutRadius, meshorder))
         for level in range(0,N_LEVELS):
@@ -433,7 +435,7 @@ StrutRadius = CubeLength/2 - CubeLength/ 100 #
 
 FindParameters(StrutRadius, CubeLength, PoissonRatio, YoungModulus)
 
-d = FindDisplacement(C, D, LatticeLenghth, LatticeWidth, LatticeHeight, LatticeTraction, epsilond, StrainGradientElasticity)
+d = FindDisplacement(C, D, LatticeLenghth, LatticeWidth, LatticeHeight, LatticeTraction, epsilonIGA0, StrainGradientElasticity)
 
 if abs(d - d_Prescribed) <= epsilond:
     print('\n The strut radius should be exactly %f mm to reach to the prescribed displacement of %f \n' %(StrutRadius,  d_Prescribed))
@@ -453,24 +455,28 @@ time0 = time.time()
     
 StrutRadius = CubeLength/4 
 print('we start with mean radius of %f :' %(StrutRadius))
+StepSize = CubeLength/4
 counter = 0 #for number of times of changing strut radius
 while True:
+    StepSize = StepSize/2
     
     FindParameters(StrutRadius, CubeLength, PoissonRatio, YoungModulus)
     
-    d = FindDisplacement(C, D, LatticeLenghth, LatticeWidth, LatticeHeight, LatticeTraction, epsilond, StrainGradientElasticity)
+    d = FindDisplacement(C, D, LatticeLenghth, LatticeWidth, LatticeHeight, LatticeTraction, epsilonIGA, StrainGradientElasticity)
 
     if abs(d - d_Prescribed) <= epsilond:
         print('\n By the strut radius of %f mm, the resulting displacement becomes %f, which is very close to the prescribed displacement of %f, and their difference is %f \n' %(StrutRadius, d, d_Prescribed, abs(d - d_Prescribed)))
         break
     elif d > d_Prescribed:
         print('\n The resulting displacement for the strut radius of %f is %f, which is more than prescribed displacement %f . Therefore, we need to increase the strut radius by %f. \n' %(StrutRadius, d, d_Prescribed, StrutRadius/2) )
-        StrutRadius += StrutRadius/2
+#        StrutRadius += StrutRadius/2
+        StrutRadius += StepSize
         print('So the srtut radius becomes %f :' %(StrutRadius))
         counter += 1
     elif d < d_Prescribed:
         print('\n The resulting displacement for the strut radius of %f is %f, which is less than prescribed displacement %f . Therefore, we need to decrease the strut radius by %f. \n' %(StrutRadius, d, d_Prescribed, StrutRadius/2) )
-        StrutRadius -= StrutRadius/2
+#        StrutRadius -= StrutRadius/2
+        StrutRadius -= StepSize
         print('So the srtut radius becomes %f :' %(StrutRadius))
         counter += 1        
         
